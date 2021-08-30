@@ -180,6 +180,8 @@ export class PluginStore {
     onSubClick = (clear: boolean = false) => {
         if (this.context.localUserInfo.roleType === EduRoleTypeEnum.teacher) {
             if (clear) {
+                this.timehandle && clearInterval(this.timehandle);
+                this.timehandle = null
                 this.changeRoomProperties({ state: 'clear' })
             } else {
                 if (this.status === 'config') {
@@ -203,6 +205,7 @@ export class PluginStore {
                 if (this.showModifyBtn) {
                     this.toChangeMode()
                 }else{
+                    this.showModifyBtn = true;
                     this.changeRoomProperties({ replyTime: (Math.floor(Date.now() / 1000)).toString(), answer: this.selAnswer, commonState: 1 })
                 }
             }
@@ -236,7 +239,7 @@ export class PluginStore {
                     let answer = getStudentInfo(properties['student' + student])
                     if (answer) {
                         ++answeredNumber;
-                        info.answer = answer.answer?.join('') || '';
+                        info.answer = answer.answer?answer.answer.slice().sort().join(''):'';
                         info.replyTime = formatTime(Number(answer.replyTime) - Number(properties.startTime))
                         if (info.answer === (properties.answer?.join('') || '')) {
                             ++rightNumber
@@ -266,13 +269,15 @@ export class PluginStore {
                 this.title = ""
                 this.answer = [...(properties.items||['A', 'B', 'C', 'D'])]
                 this.currentTime = formatTime(properties.endTime ? Number(properties.endTime) - Number(properties.startTime) : Math.floor(Date.now() / 1000) - Number(properties.startTime))
-                this.status = 'answer'
                 this.height = (this.answer?.length || 0) > 4 ? 190 : 120
-                this.buttonName = !getStudentInfo(properties['student' + this.context.localUserInfo.userUuid]) ? 'answer.submit' : 'answer.change'
-                this.showModifyBtn = getStudentInfo(properties['student' + this.context.localUserInfo.userUuid])
-                this.ui = ['sels', 'subs']
-                this.selAnswer = getStudentInfo(properties['student' + this.context.localUserInfo.userUuid])?.answer || []
-                this.updateTime();
+                if (this.status !== 'answer' || this.showModifyBtn) {
+                    this.status = 'answer'
+                    this.buttonName = !getStudentInfo(properties['student' + this.context.localUserInfo.userUuid]) ? 'answer.submit' : 'answer.change'
+                    this.showModifyBtn = getStudentInfo(properties['student' + this.context.localUserInfo.userUuid])
+                    this.ui = ['sels', 'subs']
+                    this.selAnswer = getStudentInfo(properties['student' + this.context.localUserInfo.userUuid])?.answer || []
+                    this.updateTime();
+                }
             } else if (properties.state === 'end') {
                 this.title = ""
                 this.answer = [...properties.answer||['A', 'B', 'C', 'D']]
@@ -294,7 +299,7 @@ export class PluginStore {
                     let answer = getStudentInfo(properties['student' + student])
                     if (answer) {
                         ++answeredNumber;
-                        info.answer = answer.answer?.join('') || '';
+                        info.answer = answer.answer?answer.answer.slice().sort().join(''):'';
                         info.replyTime = formatTime(Number(answer.replyTime) - Number(properties.startTime))
                         if (info.answer === (properties.answer?.join('') || '')) {
                             ++rightNumber
