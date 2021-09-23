@@ -5,11 +5,13 @@ import { ROLE, MSG_TYPE } from '../../contants';
 import { transI18n } from '~ui-kit';
 import store from '../../redux/store';
 import { messageAction } from '../../redux/actions/messageAction';
+import renderEmoji from '../../utils/renderEmoji';
 import delete_icon from '../../themes/img/delete.png';
 import './index.css';
 
 // 聊天页面
 export const TextMsg = ({ item }) => {
+  let rnTxt = [];
   const state = useSelector((state) => state);
   const roomId = state?.room.info.id;
   const roomUuid = state?.propsData.roomUuid;
@@ -24,6 +26,8 @@ export const TextMsg = ({ item }) => {
   const loginNickName = state?.loginUserInfo.nickname;
   const isTeacher =
     state.propsData.roleType === ROLE.teacher.id || state.propsData.roleType === ROLE.assistant.id;
+  // 筛选表情逻辑
+  renderEmoji(msgData, rnTxt);
 
   const menu = (
     <Menu>
@@ -79,14 +83,14 @@ export const TextMsg = ({ item }) => {
             <Dropdown overlay={menu} trigger={['contextMenu']}>
               <div className="msg-border">
                 <div className="msg-text msg-text-me">
-                  <span className="msg-data">{msgData}</span>
+                  <span className="msg-data">{rnTxt}</span>
                 </div>
               </div>
             </Dropdown>
           ) : (
             <div className="msg-border">
               <div className="msg-text msg-text-me">
-                <span className="msg-data">{msgData}</span>
+                <span className="msg-data">{rnTxt}</span>
               </div>
             </div>
           )}
@@ -104,12 +108,12 @@ export const TextMsg = ({ item }) => {
             <>
               <Dropdown overlay={menu} trigger={['contextMenu']}>
                 <div className="msg-text msg-text-other">
-                  <span className="msg-data">{msgData}</span>
+                  <span className="msg-data">{rnTxt}</span>
                 </div>
               </Dropdown>
             </>
           )}
-          {!isTeacher && <div className="msg-text msg-text-other">{msgData}</div>}
+          {!isTeacher && <div className="msg-text msg-text-other">{rnTxt}</div>}
         </div>
       )}
     </div>

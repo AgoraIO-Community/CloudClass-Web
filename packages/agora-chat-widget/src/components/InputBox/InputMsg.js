@@ -6,7 +6,7 @@ import store from '../../redux/store';
 import { transI18n } from '~ui-kit';
 import { messageAction, showEmojiAction } from '../../redux/actions/messageAction';
 import { setAllmute, removeAllmute } from '../../api/mute';
-import { Emoji } from '../../utils/emoji';
+import emoji from '../../utils/emoji';
 
 import emojiIcon from '../../themes/img/emoji.png';
 import './index.css';
@@ -14,15 +14,21 @@ import './index.css';
 // 展示表情
 export const ShowEomji = ({ getEmoji }) => {
   return (
-    <>
-      {Emoji.map((emoji, key) => {
+    <div>
+      {Object.keys(emoji.map).map((k, index) => {
+        const v = emoji.map[k];
         return (
-          <span className="emoji-content" key={key} onClick={getEmoji}>
-            {emoji}
-          </span>
+          <img
+            key={k}
+            className="emoji-content"
+            src={require(`../../themes/faces/${v}`).default}
+            onClick={() => {
+              getEmoji(k);
+            }}
+          />
         );
       })}
-    </>
+    </div>
   );
 };
 
@@ -53,14 +59,14 @@ export const InputMsg = ({ isTeacher }) => {
   };
 
   // 获取到点击的表情，加入到输入框
-  const getEmoji = (e) => {
-    e.preventDefault();
+  const getEmoji = (val) => {
+    // e.preventDefault();
     // 监听表情输入后，自动获取输入框焦点
     inputRef.current.focus({
       cursor: 'end',
     });
     // 本次输入的内容
-    let tempContent = e.target.innerText;
+    let tempContent = val;
     // 更新内容和长度
     let totalContent = content + tempContent;
     setContent(totalContent);
