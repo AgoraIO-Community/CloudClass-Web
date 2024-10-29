@@ -414,6 +414,21 @@ export class StreamUIStore extends EduUIStoreBase {
       data: { ...params },
     })
   }
+
+  @action.bound
+  async handleHandState(params: { events: Array<{ action: number }>, cmd: number }) {
+    const {
+      sessionInfo: { roomUuid, userUuid },
+      //@ts-ignore
+    } = window.EduClassroomConfig;
+
+    //@ts-ignore
+    window.globalStore.classroomStore.connectionStore.scene._apiService.fetch({
+      path: `/v1/rooms/${roomUuid}/users/${userUuid}/client/events`,
+      method: 'POST',
+      data: { ...params },
+    })
+  }
   
   /**
    * 本地音量

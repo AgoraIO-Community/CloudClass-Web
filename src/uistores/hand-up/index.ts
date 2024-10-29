@@ -51,6 +51,7 @@ export class HandUpUIStore extends EduUIStoreBase {
     if (this._isRaiseHand) return;
     const localUserUuid = this.classroomStore.userStore.localUser!.userUuid;
     this._isRaiseHand = true;
+    this.getters.classroomUIStore.streamUIStore.handleHandState({ events: [{ action: 1 }], cmd: 1503 })
     this.extensionApi.updateRaiseHandState(CustomMessageHandsUpState.raiseHand);
     const intervalInMs = getRandomInt(2000, 4000);
     this._handsUpTask = Scheduler.shared.addIntervalTask(
@@ -77,6 +78,7 @@ export class HandUpUIStore extends EduUIStoreBase {
       return
     }
     this._isRaiseHand = false;
+    this.getters.classroomUIStore.streamUIStore.handleHandState({ events: [{ action: 2 }], cmd: 1503 })
     this.extensionApi.updateRaiseHandState(CustomMessageHandsUpState.lowerHand);
     this._handsUpTask?.stop();
     const message: CustomMessageData<CustomMessageHandsUpType> = {
@@ -87,6 +89,7 @@ export class HandUpUIStore extends EduUIStoreBase {
       },
     };
     this.classroomStore.roomStore.sendCustomChannelMessage(message);
+
   }
 
   private _disposers: (() => void)[] = [];
