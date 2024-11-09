@@ -887,12 +887,6 @@ export class ToolbarUIStore extends EduUIStoreBase {
            icon: 'cloud',
            category: ToolbarItemCategory.CloudStorage,
          }),
-         ToolbarItem.fromData({
-           value: 'tools',
-           label: 'scaffold.tools',
-           icon: 'tools',
-           category: ToolbarItemCategory.Cabinet,
-         }),
        ];
  
        if (AgoraRteEngineConfig.platform === AgoraRteRuntimePlatform.Electron) {
