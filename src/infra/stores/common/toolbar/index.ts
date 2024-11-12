@@ -688,12 +688,21 @@ export class ToolbarUIStore extends EduUIStoreBase {
    * @returns
    */
   @computed get tools(): ToolbarItem[] {
-    const { role } = EduClassroomConfig.shared.sessionInfo;
+    const { widgetController } = this.classroomStore.widgetStore;
+    const props = widgetController?.getWidgetUserProperties("easemobIM") || {};
 
+    const { role } = EduClassroomConfig.shared.sessionInfo;
+    const chatGroupUuids = props.chatGroupUuids || []
     if(role == EduRoleTypeEnum.teacher){
       return this.teacherTools
     }else if(role == EduRoleTypeEnum.assistant){
-      return this.asisstantTools
+      if(chatGroupUuids.length > 0){
+        // 子助教工具栏没有花名册
+        return this.asisstantTools
+      }else{
+        // 总助教与老师工具栏一致
+        return this.teacherTools
+      }
     }else{
       return this.studentTools;
     }
@@ -828,7 +837,7 @@ export class ToolbarUIStore extends EduUIStoreBase {
   }
 
    /**
-   * 老师工具栏工具列表
+   * 子助教老师工具栏工具列表
    * @returns
    */
    @computed
