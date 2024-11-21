@@ -688,26 +688,32 @@ export class ToolbarUIStore extends EduUIStoreBase {
    * @returns
    */
   @computed get tools(): ToolbarItem[] {
-    const { widgetController } = this.classroomStore.widgetStore;
-    const props = widgetController?.getWidgetUserProperties("easemobIM") || {};
+    const { role, roomType } = EduClassroomConfig.shared.sessionInfo;
 
-    const { role } = EduClassroomConfig.shared.sessionInfo;
-    const chatGroupUuids = props.chatGroupUuids || []
-    
-    if(role == EduRoleTypeEnum.teacher){
-      return this.teacherTools
-    }else if(role == EduRoleTypeEnum.assistant){
-      if(chatGroupUuids.length > 0){
-        // 子助教工具栏没有花名册
-        return this.asisstantTools
+    if(roomType == EduRoomTypeEnum.RoomBigClass){
+      const { widgetController } = this.classroomStore.widgetStore;
+      const props = widgetController?.getWidgetUserProperties("easemobIM") || {};
+  
+      const chatGroupUuids = props.chatGroupUuids || []
+       
+      if(role == EduRoleTypeEnum.teacher){
+        return this.teacherTools
+      }else if(role == EduRoleTypeEnum.assistant){
+        if(chatGroupUuids.length > 0){
+          // 子助教工具栏没有花名册
+          return this.asisstantTools
+        }else{
+          // 总助教与老师工具栏一致
+          return this.mainAsisstantTools
+        }
       }else{
-        // 总助教与老师工具栏一致
-        return this.mainAsisstantTools
+        return this.studentTools;
       }
     }else{
-      return this.studentTools;
+      return [EduRoleTypeEnum.teacher, EduRoleTypeEnum.assistant].includes(role)
+      ? this.teacherTools
+      : this.studentTools;
     }
-
   }
 
   /**
