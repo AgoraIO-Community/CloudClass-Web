@@ -375,22 +375,21 @@ export class ToolbarUIStore extends EduUIStoreBase {
       windowList: windows,
     });
   }
+
   /**
    * 打开内建工具
    * @param id
    */
   @action.bound
   async openBuiltinCabinet(id: string) {
-    debugger
 
     switch (id) {
       case CabinetItemEnum.ScreenShare:
         // 大班课才会出现屏幕共享冲突
         if(EduClassroomConfig.shared.sessionInfo.roomType === EduRoomTypeEnum.RoomBigClass){
-          const localUserUuid = this.classroomStore.userStore.localUser?.userUuid;
-          const screenShareUserUuid = this.classroomStore.roomStore.screenShareUserUuid;
-  
-          if (screenShareUserUuid && localUserUuid != this.classroomStore.roomStore.screenShareUserUuid ){
+          const streamUuid = this.classroomStore.roomStore.screenShareStreamUuid as string;
+          const stream = this.classroomStore.streamStore.streamByStreamUuid.get(streamUuid);
+          if (stream && stream.isLocal == false){
             // 有人共享，这个人不是自己
             this.shareUIStore.addToast(
               transI18n('toast2.no_permission_to_share_screen'),

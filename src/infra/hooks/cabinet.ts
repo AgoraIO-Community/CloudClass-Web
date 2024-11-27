@@ -5,8 +5,6 @@ export const useExtensionCabinets = () => {
   const { widgetUIStore, classroomStore } = useStore();
 
   const openExtensionCabinet = useCallback((id: string, remote = true) => {
-    debugger
-
     const nextZIndex =
       classroomStore.widgetStore.widgetController?.zIndexController.incrementZIndex();
 

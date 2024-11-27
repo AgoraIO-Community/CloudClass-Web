@@ -12,7 +12,6 @@ import { ComponentLevelRules } from '../../config';
 const LocalScreenShare = observer(() => {
   const ref = useRef<HTMLDivElement | null>(null);
   const {
-    
     streamUIStore: {setupLocalScreenShare },
   } = useStore();
   useEffect(() => {
@@ -27,7 +26,7 @@ const LocalScreenShare = observer(() => {
   )
 })
 
-const ScreenShareLocalTrackPlayer = observer(() => {
+const ScreenShareLocalTrackPlayer = observer(({stream}:{stream:EduStream}) => {
   const transI18n = useI18n();
   const {
     
@@ -49,7 +48,7 @@ const ScreenShareLocalTrackPlayer = observer(() => {
           <span>{transI18n('scaffold.stop_screen_share')}</span>
         </button>
       </div>
-      {isBigClass ? <LocalScreenShare/>: null}
+      {isBigClass && stream && stream.isLocal ? <LocalScreenShare/>: null}
     </>
   );
 });
@@ -104,7 +103,7 @@ export const ScreenShareContainer = observer<FC<ScreenShareContainerProps>>(
               top: `calc(100% - ${boardAreaHeight}px)`,
               zIndex: ComponentLevelRules.ScreenShare,
             }}>
-            <ScreenShareLocalTrackPlayer />
+            <ScreenShareLocalTrackPlayer stream={screenShareStream}/>
           </div>
         ) : screenShareStream && !screenShareStream.isLocal ? (
           <div className={remotecls} style={{ height: boardAreaHeight }}>
