@@ -259,6 +259,7 @@ export class StreamUIStore extends EduUIStoreBase {
   @computed get screenShareStream(): EduStream | undefined {
     const streamUuid = this.classroomStore.roomStore.screenShareStreamUuid as string;
     const stream = this.classroomStore.streamStore.streamByStreamUuid.get(streamUuid);
+
     return stream;
   }
 

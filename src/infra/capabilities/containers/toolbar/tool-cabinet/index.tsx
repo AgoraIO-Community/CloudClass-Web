@@ -38,12 +38,13 @@ export const ToolCabinetContainer = visibilityControl(
         name,
       };
     });
-
     const handleClick = useCallback((cabinetId: string) => {
       setVisible(false);
-      isInstalled(cabinetId)
-        ? openExtensionCabinet(cabinetId, false)
-        : openBuiltinCabinet(cabinetId);
+      if(isInstalled(cabinetId)){
+        openExtensionCabinet(cabinetId, false)
+      }else{
+        openBuiltinCabinet(cabinetId);
+      }
     }, []);
 
     return (

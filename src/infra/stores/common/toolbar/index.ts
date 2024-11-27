@@ -381,8 +381,24 @@ export class ToolbarUIStore extends EduUIStoreBase {
    */
   @action.bound
   async openBuiltinCabinet(id: string) {
+    debugger
+
     switch (id) {
       case CabinetItemEnum.ScreenShare:
+        // 大班课才会出现屏幕共享冲突
+        if(EduClassroomConfig.shared.sessionInfo.roomType === EduRoomTypeEnum.RoomBigClass){
+          const localUserUuid = this.classroomStore.userStore.localUser?.userUuid;
+          const screenShareUserUuid = this.classroomStore.roomStore.screenShareUserUuid;
+  
+          if (screenShareUserUuid && localUserUuid != this.classroomStore.roomStore.screenShareUserUuid ){
+            // 有人共享，这个人不是自己
+            this.shareUIStore.addToast(
+              transI18n('toast2.no_permission_to_share_screen'),
+              'error',
+            );
+            return;
+          }
+        }
         if (this.isScreenSharing) {
           this.classroomStore.mediaStore.stopScreenShareCapture();
           return;
@@ -609,6 +625,24 @@ export class ToolbarUIStore extends EduUIStoreBase {
    */
   @computed
   get cabinetItems(): CabinetItem[] {
+    const { role, roomType } = EduClassroomConfig.shared.sessionInfo;
+    if(roomType == EduRoomTypeEnum.RoomBigClass){
+      const { widgetController } = this.classroomStore.widgetStore;
+      const props = widgetController?.getWidgetUserProperties("easemobIM") || {};
+  
+      const chatGroupUuids = props.chatGroupUuids || []
+
+      // 大班课，主助教工具栏只有屏幕共享
+      if(role == EduRoleTypeEnum.assistant && chatGroupUuids.length == 0){
+        return [
+          {
+            id: CabinetItemEnum.ScreenShare,
+            iconType: 'share-screen',
+            name: transI18n('scaffold.screen_share'),
+          },
+        ]
+      }
+    }
     const extapps = [
       {
         id: CabinetItemEnum.ScreenShare,
@@ -904,6 +938,12 @@ export class ToolbarUIStore extends EduUIStoreBase {
           category: ToolbarItemCategory.CloudStorage,
         }),
         ToolbarItem.fromData({
+          value: 'tools',
+          label: 'scaffold.tools',
+          icon: 'tools',
+          category: ToolbarItemCategory.Cabinet,
+        }),
+        ToolbarItem.fromData({
           value: 'register',
           label: 'scaffold.register',
           icon: 'register',
@@ -925,7 +965,12 @@ export class ToolbarUIStore extends EduUIStoreBase {
       }
     } else {
       _tools = [
-       
+        ToolbarItem.fromData({
+          value: 'tools',
+          label: 'scaffold.tools',
+          icon: 'tools',
+          category: ToolbarItemCategory.Cabinet,
+        }),
         ToolbarItem.fromData({
           value: 'register',
           label: 'scaffold.register',
