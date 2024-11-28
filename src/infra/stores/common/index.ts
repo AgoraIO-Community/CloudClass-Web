@@ -28,6 +28,7 @@ import { VideoGalleryUIStore } from './video-gallery';
 import { transI18n } from 'agora-common-libs';
 import { Getters } from './getters';
 
+
 export class EduClassroomUIStore {
   protected _classroomStore: EduClassroomStore;
   protected _boardUIStore: BoardUIStore;
@@ -192,7 +193,9 @@ export class EduClassroomUIStore {
   async join() {
     const { joinClassroom, joinRTC } = this.classroomStore.connectionStore;
     try {
-      await joinClassroom();
+      await joinClassroom({
+        mode: "entry"
+      });
     } catch (e) {
       if (AGError.isOf(e as AGError, AGServiceErrorCode.SERV_CANNOT_JOIN_ROOM)) {
         return this.classroomStore.connectionStore.leaveClassroom(LeaveReason.kickOut);

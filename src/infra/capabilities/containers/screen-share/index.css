@@ -4,15 +4,21 @@
 }
 
 .local-screen-share-container {
-  display: flex;
-  justify-content: center;
   position: absolute;
   width: 100%;
-  top: 5px;
+  height: 100%;
   z-index: 2;
   pointer-events: none;
 }
-
+.local-screen-share-container .stop-button_wrap {
+  width: 108px;
+  height: 30;
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999;
+}
 .local-screen-share-container .stop-button {
   font-size: 12px;
   width: 100%;
