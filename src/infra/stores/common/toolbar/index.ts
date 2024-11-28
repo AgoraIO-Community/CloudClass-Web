@@ -313,7 +313,7 @@ export class ToolbarUIStore extends EduUIStoreBase {
       } else {
         //not supported, start directly
         //web不需要传入屏幕id和类型，置为undefined，开启分享声音
-        this.classroomStore.mediaStore.startScreenShareCapture({ withAudio: true });
+        this.classroomStore.mediaStore.startScreenShareCapture({ localPreview: true, withAudio: true });
       }
     }
   }
@@ -366,6 +366,7 @@ export class ToolbarUIStore extends EduUIStoreBase {
               id: itemId,
               type: item.type,
               withAudio,
+              localPreview: true
             });
             this.classroomStore.mediaStore.setCurrentScreenShareDevice(item);
           }, 0);
