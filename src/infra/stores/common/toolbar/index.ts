@@ -313,7 +313,7 @@ export class ToolbarUIStore extends EduUIStoreBase {
       } else {
         //not supported, start directly
         //web不需要传入屏幕id和类型，置为undefined，开启分享声音
-        this.classroomStore.mediaStore.startScreenShareCapture({ withAudio: true });
+        this.classroomStore.mediaStore.startScreenShareCapture({ localPreview: true, withAudio: true });
       }
     }
   }
@@ -366,6 +366,7 @@ export class ToolbarUIStore extends EduUIStoreBase {
               id: itemId,
               type: item.type,
               withAudio,
+              localPreview: true
             });
             this.classroomStore.mediaStore.setCurrentScreenShareDevice(item);
           }, 0);
@@ -375,14 +376,29 @@ export class ToolbarUIStore extends EduUIStoreBase {
       windowList: windows,
     });
   }
+
   /**
    * 打开内建工具
    * @param id
    */
   @action.bound
   async openBuiltinCabinet(id: string) {
+
     switch (id) {
       case CabinetItemEnum.ScreenShare:
+        // 大班课才会出现屏幕共享冲突
+        if(EduClassroomConfig.shared.sessionInfo.roomType === EduRoomTypeEnum.RoomBigClass){
+          const streamUuid = this.classroomStore.roomStore.screenShareStreamUuid as string;
+          const stream = this.classroomStore.streamStore.streamByStreamUuid.get(streamUuid);
+          if (stream && stream.isLocal == false){
+            // 有人共享，这个人不是自己
+            this.shareUIStore.addToast(
+              transI18n('toast2.no_permission_to_share_screen'),
+              'error',
+            );
+            return;
+          }
+        }
         if (this.isScreenSharing) {
           this.classroomStore.mediaStore.stopScreenShareCapture();
           return;
@@ -609,6 +625,24 @@ export class ToolbarUIStore extends EduUIStoreBase {
    */
   @computed
   get cabinetItems(): CabinetItem[] {
+    const { role, roomType } = EduClassroomConfig.shared.sessionInfo;
+    if(roomType == EduRoomTypeEnum.RoomBigClass){
+      const { widgetController } = this.classroomStore.widgetStore;
+      const props = widgetController?.getWidgetUserProperties("easemobIM") || {};
+  
+      const chatGroupUuids = props.chatGroupUuids || []
+
+      // 大班课，主助教工具栏只有屏幕共享
+      if(role == EduRoleTypeEnum.assistant && chatGroupUuids.length == 0){
+        return [
+          {
+            id: CabinetItemEnum.ScreenShare,
+            iconType: 'share-screen',
+            name: transI18n('scaffold.screen_share'),
+          },
+        ]
+      }
+    }
     const extapps = [
       {
         id: CabinetItemEnum.ScreenShare,
@@ -688,11 +722,32 @@ export class ToolbarUIStore extends EduUIStoreBase {
    * @returns
    */
   @computed get tools(): ToolbarItem[] {
-    const { role } = EduClassroomConfig.shared.sessionInfo;
+    const { role, roomType } = EduClassroomConfig.shared.sessionInfo;
 
-    return [EduRoleTypeEnum.teacher, EduRoleTypeEnum.assistant].includes(role)
+    if(roomType == EduRoomTypeEnum.RoomBigClass){
+      const { widgetController } = this.classroomStore.widgetStore;
+      const props = widgetController?.getWidgetUserProperties("easemobIM") || {};
+  
+      const chatGroupUuids = props.chatGroupUuids || []
+       
+      if(role == EduRoleTypeEnum.teacher){
+        return this.teacherTools
+      }else if(role == EduRoleTypeEnum.assistant){
+        if(chatGroupUuids.length > 0){
+          // 子助教工具栏没有花名册
+          return this.asisstantTools
+        }else{
+          // 总助教与老师工具栏一致
+          return this.mainAsisstantTools
+        }
+      }else{
+        return this.studentTools;
+      }
+    }else{
+      return [EduRoleTypeEnum.teacher, EduRoleTypeEnum.assistant].includes(role)
       ? this.teacherTools
       : this.studentTools;
+    }
   }
 
   /**
@@ -821,6 +876,201 @@ export class ToolbarUIStore extends EduUIStoreBase {
 
     return _tools;
   }
+
+  /**
+   * 主助教老师工具栏工具列表
+   * @returns
+   */
+  @computed
+  get mainAsisstantTools(): ToolbarItem[] {
+    let _tools: ToolbarItem[] = [];
+    if (this.boardApi.mounted) {
+      _tools = [
+        ToolbarItem.fromData({
+          value: 'clicker',
+          label: 'scaffold.clicker',
+          icon: 'select',
+          category: ToolbarItemCategory.Clicker,
+        }),
+        ToolbarItem.fromData({
+          // selector use clicker icon
+          value: 'selection',
+          label: 'scaffold.selector',
+          icon: 'clicker',
+          category: ToolbarItemCategory.Selector,
+        }),
+        ToolbarItem.fromData({
+          value: 'pen',
+          label: 'scaffold.pencil',
+          icon: 'pen',
+          category: ToolbarItemCategory.PenPicker,
+        }),
+        ToolbarItem.fromData({
+          value: 'text',
+          label: 'scaffold.text',
+          icon: 'text',
+          category: ToolbarItemCategory.Text,
+        }),
+        ToolbarItem.fromData({
+          value: 'eraser',
+          label: 'scaffold.eraser',
+          icon: 'eraser',
+          category: ToolbarItemCategory.Eraser,
+        }),
+
+        ToolbarItem.fromData({
+          value: 'hand',
+          label: 'scaffold.move',
+          icon: 'hand',
+          category: ToolbarItemCategory.Hand,
+        }),
+        ToolbarItem.fromData({
+          value: 'save',
+          label: 'scaffold.save',
+          icon: 'save-ghost',
+          category: ToolbarItemCategory.Save,
+        }),
+
+        ToolbarItem.fromData({
+          value: 'cloud',
+          label: 'scaffold.cloud_storage',
+          icon: 'cloud',
+          category: ToolbarItemCategory.CloudStorage,
+        }),
+        ToolbarItem.fromData({
+          value: 'tools',
+          label: 'scaffold.tools',
+          icon: 'tools',
+          category: ToolbarItemCategory.Cabinet,
+        }),
+        ToolbarItem.fromData({
+          value: 'register',
+          label: 'scaffold.register',
+          icon: 'register',
+          category: ToolbarItemCategory.Roster,
+        }),
+      ];
+
+      if (AgoraRteEngineConfig.platform === AgoraRteRuntimePlatform.Electron) {
+        _tools.splice(
+          5,
+          0,
+          ToolbarItem.fromData({
+            value: 'slice',
+            label: 'scaffold.slice',
+            icon: 'slice',
+            category: ToolbarItemCategory.Slice,
+          }),
+        );
+      }
+    } else {
+      _tools = [
+        ToolbarItem.fromData({
+          value: 'tools',
+          label: 'scaffold.tools',
+          icon: 'tools',
+          category: ToolbarItemCategory.Cabinet,
+        }),
+        ToolbarItem.fromData({
+          value: 'register',
+          label: 'scaffold.register',
+          icon: 'register',
+          category: ToolbarItemCategory.Roster,
+        }),
+      ];
+    }
+
+    return _tools;
+  }
+
+
+   /**
+   * 子助教老师工具栏工具列表
+   * @returns
+   */
+   @computed
+   get asisstantTools(): ToolbarItem[] {
+     let _tools: ToolbarItem[] = [];
+     if (this.boardApi.mounted) {
+       _tools = [
+         ToolbarItem.fromData({
+           value: 'clicker',
+           label: 'scaffold.clicker',
+           icon: 'select',
+           category: ToolbarItemCategory.Clicker,
+         }),
+         ToolbarItem.fromData({
+           // selector use clicker icon
+           value: 'selection',
+           label: 'scaffold.selector',
+           icon: 'clicker',
+           category: ToolbarItemCategory.Selector,
+         }),
+         ToolbarItem.fromData({
+           value: 'pen',
+           label: 'scaffold.pencil',
+           icon: 'pen',
+           category: ToolbarItemCategory.PenPicker,
+         }),
+         ToolbarItem.fromData({
+           value: 'text',
+           label: 'scaffold.text',
+           icon: 'text',
+           category: ToolbarItemCategory.Text,
+         }),
+         ToolbarItem.fromData({
+           value: 'eraser',
+           label: 'scaffold.eraser',
+           icon: 'eraser',
+           category: ToolbarItemCategory.Eraser,
+         }),
+ 
+         ToolbarItem.fromData({
+           value: 'hand',
+           label: 'scaffold.move',
+           icon: 'hand',
+           category: ToolbarItemCategory.Hand,
+         }),
+         ToolbarItem.fromData({
+           value: 'save',
+           label: 'scaffold.save',
+           icon: 'save-ghost',
+           category: ToolbarItemCategory.Save,
+         }),
+ 
+         ToolbarItem.fromData({
+           value: 'cloud',
+           label: 'scaffold.cloud_storage',
+           icon: 'cloud',
+           category: ToolbarItemCategory.CloudStorage,
+         }),
+       ];
+ 
+       if (AgoraRteEngineConfig.platform === AgoraRteRuntimePlatform.Electron) {
+         _tools.splice(
+           5,
+           0,
+           ToolbarItem.fromData({
+             value: 'slice',
+             label: 'scaffold.slice',
+             icon: 'slice',
+             category: ToolbarItemCategory.Slice,
+           }),
+         );
+       }
+     } else {
+       _tools = [
+         ToolbarItem.fromData({
+           value: 'register',
+           label: 'scaffold.register',
+           icon: 'register',
+           category: ToolbarItemCategory.Roster,
+         }),
+       ];
+     }
+ 
+     return _tools;
+   }
 
   /**
    * 学生工具栏工具列表

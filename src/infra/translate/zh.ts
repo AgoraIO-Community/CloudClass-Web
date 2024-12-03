@@ -453,6 +453,8 @@ export const zh = {
     save_error: '保存失败',
     saving: '正在导出，请稍候…',
     screen_shot_permission_denied: '使用屏幕截图前，请授权打开应用的访问权限',
+    no_permission_to_share_screen: '正在屏幕共享中，无法开启共享',
+
   },
   breakout_room: {
     create_prefix: '创建',

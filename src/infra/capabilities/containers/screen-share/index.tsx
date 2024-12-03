@@ -1,5 +1,5 @@
 import { useStore } from '@classroom/infra/hooks/ui-store';
-import { EduStream } from 'agora-edu-core';
+import { EduClassroomConfig, EduRoomTypeEnum, EduStream } from 'agora-edu-core';
 import { AGRenderMode } from 'agora-rte-sdk';
 import classnames from 'classnames';
 import { observer } from 'mobx-react';
@@ -9,25 +9,47 @@ import { useI18n } from 'agora-common-libs';
 import './index.css';
 import { ComponentLevelRules } from '../../config';
 
-const ScreenShareLocalTrackPlayer = observer(() => {
+const LocalScreenShare = observer(() => {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const {
+    streamUIStore: {setupLocalScreenShare },
+  } = useStore();
+  useEffect(() => {
+    if (ref.current) {
+      setupLocalScreenShare(ref.current)
+    }
+  }, [ref.current]);
+  return (
+    <div style={{ width: '100%', height: '100%'}}
+      ref={ref}>
+    </div>
+  )
+})
+
+const ScreenShareLocalTrackPlayer = observer(({stream}:{stream:EduStream}) => {
   const transI18n = useI18n();
   const {
-    streamUIStore: { stopScreenShareCapture, localScreenShareOff },
+    
+    streamUIStore: { stopScreenShareCapture, localScreenShareOff, setupLocalScreenShare },
   } = useStore();
 
   const [icon, setIcon] = useState(SvgIconEnum.SHARE_DEFAULT);
+  const isBigClass = EduClassroomConfig.shared.sessionInfo.roomType === EduRoomTypeEnum.RoomBigClass
 
   return localScreenShareOff ? null : (
-    <div style={{ width: 108, height: 30 }}>
-      <button
-        className="stop-button"
-        onClick={stopScreenShareCapture}
-        onMouseEnter={() => setIcon(SvgIconEnum.SHARE_HOVER)}
-        onMouseLeave={() => setIcon(SvgIconEnum.SHARE_DEFAULT)}>
-        <SvgImg type={icon} style={{ display: 'flex', marginRight: 2 }} />
-        <span>{transI18n('scaffold.stop_screen_share')}</span>
-      </button>
-    </div>
+    <>
+      <div className='stop-button_wrap'>
+        <button
+          className="stop-button"
+          onClick={stopScreenShareCapture}
+          onMouseEnter={() => setIcon(SvgIconEnum.SHARE_HOVER)}
+          onMouseLeave={() => setIcon(SvgIconEnum.SHARE_DEFAULT)}>
+          <SvgImg type={icon} style={{ display: 'flex', marginRight: 2 }} />
+          <span>{transI18n('scaffold.stop_screen_share')}</span>
+        </button>
+      </div>
+      {isBigClass && stream && stream.isLocal ? <LocalScreenShare/>: null}
+    </>
   );
 });
 
@@ -72,7 +94,6 @@ export const ScreenShareContainer = observer<FC<ScreenShareContainerProps>>(
     );
 
     const localcls = classnames('local-screen-share-container', className);
-
     return screenShareStream ? (
       <React.Fragment>
         {screenShareStream?.isLocal ? (
@@ -82,7 +103,7 @@ export const ScreenShareContainer = observer<FC<ScreenShareContainerProps>>(
               top: `calc(100% - ${boardAreaHeight}px)`,
               zIndex: ComponentLevelRules.ScreenShare,
             }}>
-            <ScreenShareLocalTrackPlayer />
+            <ScreenShareLocalTrackPlayer stream={screenShareStream}/>
           </div>
         ) : screenShareStream && !screenShareStream.isLocal ? (
           <div className={remotecls} style={{ height: boardAreaHeight }}>
